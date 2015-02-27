@@ -1,0 +1,251 @@
+import java.util.Scanner;
+import java.util.Arrays;
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
+
+
+/*CS2103T CE2 
+ * Kim Chong Kuk
+ * A0113888U
+ * Instruction -- 
+ * --If no argument was typed in commandline, the output filename will be 'mytext.txt'
+ * --The program is set to save the file at the end of the program when "exit" command is typed by the user
+ * 
+ * Assumptions made : 
+ * 1.When I delete the item, it will automatically shift to fill the empty slots( ie. if i delete item no.2, the item no.3 will take its position
+ * 2.The maximum storage of items is set to 10
+ * 
+ * 
+ */
+
+public class TextBuddy {
+	private static Scanner scanner = new Scanner(System.in);
+	private static final int STORAGE_MAX = 10;
+	private static String[] storage = new String[STORAGE_MAX];
+	private static final String DEFAULT_STRING = "NIL";
+	private static String FILE_NAME = "mytext.txt";
+
+	public static void main(String[] args)  {
+		
+		if(args.length!=0)
+		{
+		FILE_NAME = args[0];
+		}
+		System.out.println("Welcome to TextBuddy.  "+ FILE_NAME+" is ready for use");
+
+		String command = initializeString();
+		while (!command.equalsIgnoreCase("exit")) {
+			System.out.print("command: ");
+			command = scanner.nextLine();
+
+			processCommand(command);
+		}
+		saveToFile();
+
+	}
+	
+
+	static String initializeString() {
+		for (int i = 0; i < storage.length; i++) {
+			storage[i] = DEFAULT_STRING;
+		}
+
+		String command = DEFAULT_STRING;
+		return command;
+	}
+
+	private static void saveToFile() {
+		PrintWriter write = null;
+		try {
+			write = new PrintWriter(FILE_NAME, "UTF-8");
+		} catch (FileNotFoundException e) {
+		
+			e.printStackTrace();
+		} catch (UnsupportedEncodingException e) {
+			
+			e.printStackTrace();
+		}
+		
+		for (int i = 0; i < storage.length; i++) {
+			if (storage[i] != DEFAULT_STRING)
+				write.println(i+1+". "+storage[i]);
+		}
+		write.close();
+
+	}
+
+	public static void processCommand(String command) {
+		String firstword, detail;
+		firstword = retrieveFirstWord(command);
+		detail = trimFirstWord(command);
+		executeCommand(firstword, detail);
+
+	}
+	
+	/*This method identify the specific command type and execute the command according to it. 
+	 * 
+	 */
+
+	public static void executeCommand(String firstword, String detail) {
+		switch (firstword)
+		{
+		case "add":{
+			addCommand(detail, storage);
+			break;
+		}
+		
+		case "delete" :{
+			deleteCommand(detail, storage);
+			break;
+		}
+		
+		case "display":{
+			displayCommand(storage);
+			break;
+		}
+		
+		case "clear" :{
+			clearCommand(storage);
+			break;
+		}
+		
+		case "sort" :{
+			sortCommand(storage);
+			break;
+		}
+		
+		case "search" :{
+			searchCommand(detail, storage);
+			break;
+		}
+		
+		}
+		
+		organizeStorage(storage);
+
+	}
+
+	
+	/*
+	 * this method searches for the input word and prints out all the lines in the list that contains specific word.
+	 * This method returns true when the word is found in the list and false if it cannot locate it.
+	 */
+	public static boolean searchCommand(String detail, String[] storage) {
+		int count=0;
+		for(int i=0; i<STORAGE_MAX; i++ ){
+			if(storage[i].contains(detail)){
+				count++;
+				System.out.println(i+1 + ". " + storage[i]);
+				
+			}
+			
+		}
+		if(count==0){
+			System.out.println("the word "+detail+" cannot be found in the list!");
+			return false;
+		}
+		return true;
+	}
+	
+	
+/*
+ * This method sorts all lines in the list in alphabetical order.
+ */
+	public static void sortCommand(String[] storage) {
+		
+		
+		
+		Arrays.sort(storage);
+		removeDefaultStrings(storage);
+		
+		System.out.println("Sorted list : ");
+		displayCommand(storage);
+	}
+
+	
+	/*
+	 * This method is used in sortCommand to make sure that all the default strings are removed when sorting, 
+	 * to make sure the sorted list is numbered in orderly manner.
+	 */
+	private static void removeDefaultStrings(String[] storage) {
+		int temp=0;
+		for(int i=0; i<STORAGE_MAX; i++){
+			if(!storage[i].equals(DEFAULT_STRING)){
+				
+				storage[temp]=storage[i];
+				storage[i]=DEFAULT_STRING;
+				temp++;
+				
+			}
+		}
+	}
+
+
+	/*
+	this method organizes the storage after the executeCommand() is called.
+	It is especially useful for the case when the item in the middle of the array is deleted, 
+	to make sure there is no number gap in list.
+	*/
+	private static void organizeStorage(String[] storage) {
+		for (int i = 0; i < storage.length - 1; i++) {
+			if (storage[i] == DEFAULT_STRING && storage[i + 1] != DEFAULT_STRING) {
+				storage[i] = storage[i + 1];
+				storage[i + 1] = DEFAULT_STRING;
+			}
+
+		}
+
+	}
+
+	private static void clearCommand(String[] storage) {
+		for (int i = 0; i < storage.length; i++)
+			storage[i] = DEFAULT_STRING;
+
+		System.out.println("All contents deleted from "+FILE_NAME);
+
+	}
+
+	public static void displayCommand(String[] storage) {
+		int count = 0;
+		for (int i = 0; i < storage.length; i++) {
+			if (!storage[i].equals(DEFAULT_STRING)) {
+				
+				System.out.println(i+1 + ". " + storage[i]);
+				count++;
+			}
+		}
+		if (count == 0)
+			System.out.println(FILE_NAME+" is empty!");
+
+	}
+
+	private static void deleteCommand(String detail, String[] storage) {
+		int index = Integer.parseInt(detail) - 1;
+		System.out.println("deleted from " +FILE_NAME+ " : \"" + storage[index]
+				+ "\"");
+		storage[index] = DEFAULT_STRING;
+
+	}
+
+	private static void addCommand(String detail, String[] storage) {
+		for (int i = 0; i < storage.length; i++) {
+			if (storage[i] == DEFAULT_STRING) {
+				storage[i] = detail;
+				break;
+			}
+		}
+		System.out.println("\"" + detail + "\" has been added to"+FILE_NAME+".");
+
+	}
+
+	public static String trimFirstWord(String command) {
+		return command.replace(retrieveFirstWord(command), "").trim();
+	}
+
+	public static String retrieveFirstWord(String command) {
+		String commandType = command.trim().split("\\s+")[0];
+		return commandType;
+	}
+
+}
